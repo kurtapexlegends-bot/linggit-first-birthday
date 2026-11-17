@@ -15,11 +15,11 @@ interface StoryNavigationProps {
 const sceneTitles = [
   "Envelope",
   "Welcome",
-  "Dress Code",
-  "Venue Map",
+  "Attire",
+  "Location",
   "Linggit",
-  "Favorites",
-  "RSVP Hub",
+  "Milestones",
+  "RSVP",
 ];
 
 export const StoryNavigation: React.FC<StoryNavigationProps> = ({
@@ -29,7 +29,7 @@ export const StoryNavigation: React.FC<StoryNavigationProps> = ({
   onNext,
   onSelectScene,
 }) => {
-  if (currentScene === 0) return null; // Envelope handles its own tap-to-open
+  if (currentScene === 0) return null;
 
   const handlePrev = () => {
     audioController.playPop();
@@ -48,21 +48,19 @@ export const StoryNavigation: React.FC<StoryNavigationProps> = ({
 
   return (
     <div className="fixed bottom-3 inset-x-0 z-40 flex items-center justify-center px-4 pointer-events-none">
-      <div className="flex items-center gap-2 py-2 px-3.5 bg-white/95 backdrop-blur-md rounded-full shadow-xl border border-rachel-pink/30 pointer-events-auto">
-        {/* Back Button */}
+      <div className="flex items-center gap-2 py-2 px-3.5 bg-white/95 backdrop-blur-md rounded-full shadow-lg border border-[#E5C98D]/60 pointer-events-auto">
         <button
           onClick={handlePrev}
           disabled={currentScene <= 1}
-          title="Previous Scene"
-          className="p-1.5 rounded-full hover:bg-slate-100 disabled:opacity-30 disabled:hover:bg-transparent transition-colors text-slate-700"
+          title="Previous Page"
+          className="p-1 rounded-full hover:bg-stone-100 disabled:opacity-30 disabled:hover:bg-transparent transition-colors text-stone-700"
         >
           <ChevronLeft className="w-4 h-4" />
         </button>
 
-        {/* Step Indicator Dots */}
         <div className="flex items-center gap-1.5 px-2">
           {Array.from({ length: totalScenes - 1 }).map((_, index) => {
-            const sceneIndex = index + 1; // 1 to 6
+            const sceneIndex = index + 1;
             const isActive = currentScene === sceneIndex;
             return (
               <button
@@ -71,25 +69,23 @@ export const StoryNavigation: React.FC<StoryNavigationProps> = ({
                 title={sceneTitles[sceneIndex]}
                 className={`transition-all duration-300 rounded-full ${
                   isActive
-                    ? "w-6 h-2 bg-gradient-to-r from-rachel-pink to-rachel-blue"
-                    : "w-2 h-2 bg-slate-300 hover:bg-slate-400"
+                    ? "w-5 h-1.5 bg-[#996515]"
+                    : "w-1.5 h-1.5 bg-stone-200 hover:bg-stone-300"
                 }`}
               />
             );
           })}
         </div>
 
-        {/* Scene Name Label */}
-        <span className="text-[11px] font-black text-slate-700 min-w-[65px] text-center">
+        <span className="font-serif-luxury text-[11px] font-bold text-stone-700 min-w-[60px] text-center">
           {sceneTitles[currentScene]}
         </span>
 
-        {/* Next Button */}
         <button
           onClick={handleNext}
           disabled={currentScene >= totalScenes - 1}
-          title="Next Scene"
-          className="p-1.5 rounded-full hover:bg-slate-100 disabled:opacity-30 disabled:hover:bg-transparent transition-colors text-slate-700"
+          title="Next Page"
+          className="p-1 rounded-full hover:bg-stone-100 disabled:opacity-30 disabled:hover:bg-transparent transition-colors text-stone-700"
         >
           <ChevronRight className="w-4 h-4" />
         </button>

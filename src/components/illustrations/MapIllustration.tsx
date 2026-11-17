@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { MapPin } from "lucide-react";
 
 interface MapIllustrationProps {
   venueName: string;
@@ -9,105 +10,79 @@ interface MapIllustrationProps {
 
 export const MapIllustration: React.FC<MapIllustrationProps> = ({
   venueName,
-  className = "w-full h-56",
+  className = "w-full h-52",
 }) => {
   return (
-    <div className={`relative overflow-hidden rounded-2xl border-2 border-rachel-blue/30 shadow-inner bg-emerald-50/60 ${className}`}>
+    <div
+      className={`relative overflow-hidden rounded-2xl border border-[#E5C98D]/60 shadow-inner bg-[#FBF8F3] ${className}`}
+    >
       <svg
-        viewBox="0 0 400 240"
+        viewBox="0 0 400 220"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
-        className="w-full h-full object-cover"
+        className="w-full h-full object-cover opacity-90"
       >
-        {/* Park Greenery Ground */}
-        <rect width="400" height="240" fill="#E8F5E9" />
+        {/* Soft Parchment Background */}
+        <rect width="400" height="220" fill="#FAF6F0" />
 
-        {/* Diagonal Soft Water Stream / Lake */}
+        {/* Delicate Topographical Grid */}
         <path
-          d="M0 190C100 170 180 220 280 200C340 185 370 210 400 200V240H0V190Z"
-          fill="#BAE6FD"
-          fillOpacity="0.8"
-        />
-
-        {/* Road Grid */}
-        {/* Main Boulevard */}
-        <path
-          d="M-10 110C90 105 180 115 280 95C330 85 370 90 410 80"
-          stroke="#FFFFFF"
-          strokeWidth="32"
-          strokeLinecap="round"
-        />
-        <path
-          d="M-10 110C90 105 180 115 280 95C330 85 370 90 410 80"
-          stroke="#E2E8F0"
-          strokeWidth="26"
-          strokeLinecap="round"
-        />
-        {/* Road Dash lines */}
-        <path
-          d="M-10 110C90 105 180 115 280 95C330 85 370 90 410 80"
-          stroke="#FBBF24"
-          strokeWidth="2.5"
-          strokeDasharray="8 8"
-          strokeLinecap="round"
+          d="M0 60H400M0 120H400M0 180H400M80 0V220M180 0V220M280 0V220M380 0V220"
+          stroke="#EFE8DD"
+          strokeWidth="1"
         />
 
-        {/* Avenue Crossroad */}
+        {/* Soft Water Feature */}
         <path
-          d="M230 -10L205 250"
+          d="M-20 180C80 160 160 200 260 180C340 165 370 190 420 175V230H-20V180Z"
+          fill="#E6F2F8"
+        />
+
+        {/* Clean Roadways */}
+        <path
+          d="M-10 100C110 95 190 110 290 85C340 75 370 80 420 70"
           stroke="#FFFFFF"
           strokeWidth="24"
+          strokeLinecap="round"
         />
         <path
-          d="M230 -10L205 250"
-          stroke="#E2E8F0"
+          d="M-10 100C110 95 190 110 290 85C340 75 370 80 420 70"
+          stroke="#EDE4D6"
           strokeWidth="18"
+          strokeLinecap="round"
+        />
+        <path
+          d="M-10 100C110 95 190 110 290 85C340 75 370 80 420 70"
+          stroke="#D4AF37"
+          strokeWidth="1.5"
+          strokeDasharray="6 6"
+          strokeLinecap="round"
         />
 
-        {/* Park Trees & Foliage */}
-        <circle cx="60" cy="50" r="18" fill="#A7F3D0" />
-        <circle cx="50" cy="45" r="14" fill="#34D399" />
-        <circle cx="70" cy="55" r="12" fill="#059669" />
+        {/* Cross Avenue */}
+        <path d="M220 -10L195 230" stroke="#FFFFFF" strokeWidth="20" />
+        <path d="M220 -10L195 230" stroke="#EDE4D6" strokeWidth="14" />
 
-        <circle cx="340" cy="50" r="16" fill="#A7F3D0" />
-        <circle cx="350" cy="42" r="13" fill="#34D399" />
-
-        <circle cx="80" cy="170" r="15" fill="#A7F3D0" />
-        <circle cx="70" cy="165" r="12" fill="#34D399" />
-
-        {/* Little Clubhouse / Pavilion Roof */}
-        <rect x="180" y="70" width="48" height="34" rx="4" fill="#FEF3C7" stroke="#F59E0B" strokeWidth="2" />
-        <polygon points="175,70 204,45 233,70" fill="#F43F5E" />
+        {/* Park Foliage Accents */}
+        <ellipse cx="70" cy="50" rx="22" ry="16" fill="#E8EFE5" />
+        <ellipse cx="330" cy="50" rx="20" ry="14" fill="#E8EFE5" />
+        <ellipse cx="90" cy="150" rx="18" ry="12" fill="#E8EFE5" />
       </svg>
 
-      {/* Pulsing Radar Rings at Pin Target */}
+      {/* Gentle Radar Glow */}
       <div className="absolute left-[51%] top-[38%] -translate-x-1/2 -translate-y-1/2 pointer-events-none">
-        <span className="absolute -inset-4 rounded-full bg-rose-400 opacity-40 animate-ping" />
-        <span className="absolute -inset-8 rounded-full bg-rose-300 opacity-20 animate-pulse" />
+        <span className="absolute -inset-3 rounded-full bg-rose-400 opacity-30 animate-ping" />
+        <span className="absolute -inset-6 rounded-full bg-amber-300 opacity-20 animate-pulse" />
       </div>
 
-      {/* Prominent Bouncing Location Pin */}
-      <div className="absolute left-[51%] top-[34%] -translate-x-1/2 -translate-y-full flex flex-col items-center animate-bounce">
-        <div className="relative">
-          <svg width="46" height="54" viewBox="0 0 46 54" fill="none">
-            {/* Drop Shadow */}
-            <ellipse cx="23" cy="50" rx="9" ry="3.5" fill="#0F172A" fillOpacity="0.25" />
-            {/* Pin Body */}
-            <path
-              d="M23 0C10.3 0 0 10.3 0 23C0 37.5 23 50 23 50C23 50 46 37.5 46 23C46 10.3 35.7 0 23 0Z"
-              fill="#E11D48"
-              stroke="#FFFFFF"
-              strokeWidth="2.5"
-            />
-            {/* Pin Inner Center */}
-            <circle cx="23" cy="20" r="10" fill="#FFFFFF" />
-            <circle cx="23" cy="20" r="5" fill="#E11D48" />
-          </svg>
+      {/* Elegant Metallic Location Pin */}
+      <div className="absolute left-[51%] top-[34%] -translate-x-1/2 -translate-y-full flex flex-col items-center">
+        <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#E11D48] to-[#F43F5E] p-1.5 shadow-xl border-2 border-white flex items-center justify-center text-white">
+          <MapPin className="w-5 h-5 fill-white stroke-rose-600" />
         </div>
-        {/* Floating Tooltip Label */}
-        <div className="bg-white/95 backdrop-blur-sm px-3 py-1 rounded-full shadow-lg border border-rose-200 -mt-2">
-          <p className="text-[11px] font-black tracking-wide text-rose-600 whitespace-nowrap flex items-center gap-1">
-            <span>📍</span> {venueName}
+        <div className="bg-white/95 backdrop-blur-md px-3 py-1 rounded-full shadow-md border border-[#E5C98D] -mt-1 text-center">
+          <p className="font-serif-luxury text-[11px] font-bold text-stone-900 tracking-tight whitespace-nowrap">
+            {venueName}
           </p>
         </div>
       </div>

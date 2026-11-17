@@ -3,24 +3,64 @@
 @tailwind utilities;
 
 :root {
-  --background: #fffdf7;
-  --foreground: #1e293b;
+  --background: #faf7f2;
+  --foreground: #292524;
 }
 
 body {
   color: var(--foreground);
   background-color: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
   overflow-x: hidden;
   min-height: 100vh;
 }
 
-/* Subtle Ms. Rachel Pastel Floating Dots Background */
-.bg-rachel-pattern {
-  background-color: #fffdf7;
-  background-image: 
-    radial-gradient(#fce7f3 1.5px, transparent 1.5px),
-    radial-gradient(#e0f2fe 1.5px, #fffdf7 1.5px);
-  background-size: 40px 40px;
-  background-position: 0 0, 20px 20px;
+.font-serif-luxury {
+  font-family: var(--font-fraunces), Georgia, serif;
+}
+
+.font-sans-clean {
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+/* Luxury Paper Grain Background */
+.bg-stationery {
+  background-color: #faf7f2;
+  background-image: radial-gradient(rgba(215, 196, 183, 0.25) 1px, transparent 1px),
+    radial-gradient(rgba(244, 235, 225, 0.4) 1px, #faf7f2 1px);
+  background-size: 32px 32px;
+  background-position: 0 0, 16px 16px;
+}
+
+/* Diagonal Pinstripe Envelope Liner */
+.bg-envelope-liner {
+  background-color: #fcf8f2;
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgba(244, 180, 198, 0.18),
+    rgba(244, 180, 198, 0.18) 10px,
+    rgba(186, 224, 246, 0.2) 10px,
+    rgba(186, 224, 246, 0.2) 20px
+  );
+}
+
+/* Gold Foil Gradient Shimmer */
+.gold-foil {
+  background: linear-gradient(135deg, #dfba73 0%, #fae8b4 25%, #c89e4b 50%, #f6e2a2 75%, #b8862d 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.gold-border {
+  border-color: #e5c98d;
+}
+
+/* Tactile Card Depth */
+.card-deckle {
+  background: #ffffff;
+  border-radius: 1.75rem;
+  border: 1px solid rgba(229, 201, 141, 0.4);
+  box-shadow: 
+    0 1px 2px rgba(41, 37, 36, 0.04),
+    0 4px 12px rgba(41, 37, 36, 0.05),
+    0 24px 36px -12px rgba(184, 134, 45, 0.08);
 }

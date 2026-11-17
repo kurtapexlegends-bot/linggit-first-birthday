@@ -20,16 +20,16 @@ export const AudioToggle: React.FC = () => {
       <button
         onClick={handleToggle}
         title={isMuted ? "Unmute Music" : "Mute Music"}
-        className="flex items-center gap-1.5 py-1.5 px-3 bg-white/90 hover:bg-white backdrop-blur-md border border-rachel-pink/40 shadow-md rounded-full text-xs font-bold text-slate-700 transition-all hover:scale-105 active:scale-95"
+        className="flex items-center gap-2 py-1.5 px-3.5 bg-white/90 hover:bg-white backdrop-blur-md border border-[#E5C98D]/60 shadow-xs rounded-full text-xs font-semibold text-stone-700 transition-all hover:scale-102 active:scale-98"
       >
-        <Music className={`w-3.5 h-3.5 text-rachel-pink ${isMuted ? "" : "animate-bounce"}`} />
-        <span className="hidden sm:inline text-[11px] text-slate-600 font-semibold">
+        <Music className={`w-3.5 h-3.5 text-[#996515] ${isMuted ? "" : "animate-pulse"}`} />
+        <span className="hidden sm:inline text-[11px] font-serif-luxury text-stone-600 font-medium">
           You Are My Sunshine
         </span>
         {isMuted ? (
-          <VolumeX className="w-3.5 h-3.5 text-rose-500" />
+          <VolumeX className="w-3.5 h-3.5 text-stone-400" />
         ) : (
-          <Volume2 className="w-3.5 h-3.5 text-emerald-600" />
+          <Volume2 className="w-3.5 h-3.5 text-[#A87B2E]" />
         )}
       </button>
     </div>

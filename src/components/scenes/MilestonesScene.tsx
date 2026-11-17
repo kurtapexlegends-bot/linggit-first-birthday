@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { PottyTinay } from "../illustrations/PottyTinay";
 import { audioController } from "@/lib/audio";
 import { eventConfig } from "@/config/event-config";
-import { Sparkles, ArrowRight, Heart, Music, Award } from "lucide-react";
+import { Sparkles, ArrowRight, Heart, Music, Award, Smile } from "lucide-react";
 
 interface MilestonesSceneProps {
   onNext: () => void;
@@ -23,78 +23,114 @@ export const MilestonesScene: React.FC<MilestonesSceneProps> = ({ onNext }) => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-between min-h-[72vh] w-full max-w-lg mx-auto px-4 py-2 select-none">
-      {/* Top Banner */}
+    <div className="flex flex-col items-center justify-between min-h-[74vh] w-full max-w-lg mx-auto px-4 py-2 select-none">
+      {/* Category Tag */}
       <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-sky-100 border border-sky-300 rounded-full text-sky-900 font-extrabold text-xs shadow-sm mb-2"
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-sky-50 border border-sky-200 rounded-full text-sky-900 text-xs font-semibold tracking-wider uppercase mb-2 shadow-xs"
       >
         <Award className="w-3.5 h-3.5 text-sky-600" />
-        <span>1 Year of Milestones &amp; Favorites</span>
+        <span>First Year Highlights</span>
       </motion.div>
 
-      {/* Main Feature: Potty Tinay Spotlight Card */}
+      {/* Potty Tinay Feature Card */}
       <motion.div
-        initial={{ opacity: 0, y: 15 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="w-full bg-gradient-to-br from-sky-50 via-white to-pink-50 rounded-3xl p-4 shadow-xl border-2 border-sky-200 text-center relative overflow-hidden mb-3"
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="card-deckle p-5 w-full text-center relative overflow-hidden mb-3"
       >
-        <div className="flex items-center justify-center gap-1 text-xs font-black text-rachel-blue-dark uppercase tracking-wider mb-1">
-          <Music className="w-3.5 h-3.5 text-rachel-pink animate-bounce" />
-          <span>#1 All-Time Favorite Song &amp; Show</span>
+        <div className="flex items-center justify-center gap-1.5 text-xs font-bold uppercase tracking-wider text-rose-700 mb-1">
+          <Music className="w-3.5 h-3.5 text-rose-500" />
+          <span>Linggit&apos;s Favorite Song</span>
         </div>
 
-        <h3 className="text-xl sm:text-2xl font-black text-slate-800 tracking-tight">
+        <h3 className="font-serif-luxury text-xl sm:text-2xl font-bold text-stone-900">
           {eventConfig.milestones.favorites.songAndShow}
         </h3>
 
-        {/* Interactive Potty Tinay Centerpiece */}
-        <div className="my-2 flex justify-center">
-          <PottyTinay onClick={handlePottyTap} className="w-32 h-32 sm:w-36 sm:h-36" />
+        {/* Potty Tinay Medallion */}
+        <div className="my-2.5 flex justify-center">
+          <PottyTinay onClick={handlePottyTap} className="w-32 h-32" />
         </div>
 
-        <p className="text-xs text-slate-600 font-medium max-w-xs mx-auto">
-          &ldquo;Whenever Ms. Rachel plays this, Linggit stops, giggles, claps, and dances to the beat!&rdquo;
-        </p>
-        <p className="text-[10px] text-rachel-pink-dark font-bold mt-1">
-          💡 Tap Potty Tinay for a magical chime!
+        <p className="text-xs text-stone-600 font-medium max-w-xs mx-auto leading-relaxed">
+          &ldquo;Whenever Ms. Rachel sings this, Linggit claps, giggles, and bounces to the rhythm!&rdquo;
         </p>
       </motion.div>
 
-      {/* Milestone Stats Grid */}
+      {/* Milestone Stats */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
         className="w-full grid grid-cols-2 gap-2 mb-3"
       >
-        {eventConfig.milestones.stats.map((stat) => (
-          <div
-            key={stat.label}
-            className="p-3 bg-white rounded-2xl border border-slate-200/80 shadow-sm flex items-center gap-2.5 text-left"
-          >
-            <span className="text-2xl shrink-0">{stat.icon}</span>
-            <div className="min-w-0">
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider truncate">
-                {stat.label}
-              </p>
-              <p className="text-xs font-black text-slate-800 leading-tight">
-                {stat.value}
-              </p>
-            </div>
+        <div className="p-3 bg-white rounded-2xl border border-stone-200/80 shadow-xs flex items-center gap-3 text-left">
+          <div className="p-2 rounded-xl bg-amber-50 text-[#996515] border border-[#E5C98D]/40 shrink-0">
+            <Heart className="w-4 h-4 fill-amber-600 text-amber-600" />
           </div>
-        ))}
+          <div>
+            <p className="text-[10px] font-bold text-stone-400 uppercase tracking-wider">
+              Age Today
+            </p>
+            <p className="font-serif-luxury text-xs font-bold text-stone-800 leading-tight">
+              365 Days of Joy
+            </p>
+          </div>
+        </div>
+
+        <div className="p-3 bg-white rounded-2xl border border-stone-200/80 shadow-xs flex items-center gap-3 text-left">
+          <div className="p-2 rounded-xl bg-sky-50 text-sky-600 border border-sky-200/60 shrink-0">
+            <Smile className="w-4 h-4" />
+          </div>
+          <div>
+            <p className="text-[10px] font-bold text-stone-400 uppercase tracking-wider">
+              Milestone
+            </p>
+            <p className="font-serif-luxury text-xs font-bold text-stone-800 leading-tight">
+              6 Pearly Teeth
+            </p>
+          </div>
+        </div>
+
+        <div className="p-3 bg-white rounded-2xl border border-stone-200/80 shadow-xs flex items-center gap-3 text-left">
+          <div className="p-2 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-200/60 shrink-0">
+            <Sparkles className="w-4 h-4" />
+          </div>
+          <div>
+            <p className="text-[10px] font-bold text-stone-400 uppercase tracking-wider">
+              Movement
+            </p>
+            <p className="font-serif-luxury text-xs font-bold text-stone-800 leading-tight">
+              Cruising &amp; Walking
+            </p>
+          </div>
+        </div>
+
+        <div className="p-3 bg-white rounded-2xl border border-stone-200/80 shadow-xs flex items-center gap-3 text-left">
+          <div className="p-2 rounded-xl bg-rose-50 text-rose-600 border border-rose-200/60 shrink-0">
+            <Music className="w-4 h-4" />
+          </div>
+          <div>
+            <p className="text-[10px] font-bold text-stone-400 uppercase tracking-wider">
+              Top Song
+            </p>
+            <p className="font-serif-luxury text-xs font-bold text-stone-800 leading-tight">
+              Potty Tinay
+            </p>
+          </div>
+        </div>
       </motion.div>
 
-      {/* Ms. Rachel Educational Quote Banner */}
+      {/* Quote Banner */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.3 }}
-        className="w-full bg-rachel-pink-light/60 rounded-2xl p-2.5 border border-rachel-pink/30 flex items-center justify-center text-center"
+        className="w-full bg-[#FAF5EE] rounded-xl p-2.5 border border-[#E5C98D]/40 text-center"
       >
-        <p className="text-xs text-slate-700 font-bold italic">
+        <p className="font-serif-luxury text-xs text-stone-700 italic font-medium">
           &ldquo;{eventConfig.milestones.quote}&rdquo;
         </p>
       </motion.div>
@@ -108,15 +144,11 @@ export const MilestonesScene: React.FC<MilestonesSceneProps> = ({ onNext }) => {
       >
         <button
           onClick={handleNext}
-          className="w-full flex items-center justify-center gap-2.5 py-3.5 px-6 bg-gradient-to-r from-rachel-pink to-rose-400 hover:from-rose-500 hover:to-rachel-pink text-white font-extrabold text-base rounded-2xl shadow-lg hover:shadow-xl transition-all hover:scale-[1.02] active:scale-[0.98]"
+          className="w-full flex items-center justify-center gap-2 py-3.5 px-6 bg-stone-900 hover:bg-stone-800 text-white font-medium text-sm rounded-full shadow-md hover:shadow-lg transition-all hover:scale-[1.01] active:scale-[0.99]"
         >
-          <span>RSVP &amp; Event Program</span>
-          <ArrowRight className="w-5 h-5" />
+          <span>RSVP &amp; Program Schedule</span>
+          <ArrowRight className="w-4 h-4 text-amber-300" />
         </button>
-        <span className="text-[11px] text-slate-500 font-semibold flex items-center gap-1">
-          <Heart className="w-3 h-3 text-rachel-pink fill-rachel-pink" />
-          Reserve your seats and message Linggit
-        </span>
       </motion.div>
     </div>
   );

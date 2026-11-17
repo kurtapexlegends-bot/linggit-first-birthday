@@ -1,34 +1,34 @@
 import type { Metadata, Viewport } from "next";
-import { Fredoka, Quicksand } from "next/font/google";
+import { Fraunces, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { eventConfig } from "@/config/event-config";
 
-const fredoka = Fredoka({
+const fraunces = Fraunces({
   subsets: ["latin"],
-  weight: ["400", "600", "700"],
-  variable: "--font-fredoka",
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-fraunces",
   display: "swap",
 });
 
-const quicksand = Quicksand({
+const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ["latin"],
-  weight: ["500", "600", "700"],
-  variable: "--font-quicksand",
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-sans",
   display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: `${eventConfig.celebrant.nickname} is Turning 1! 🎈 | Ms. Rachel Birthday Invitation`,
-  description: `You're invited to ${eventConfig.celebrant.fullName}'s 1st Birthday Celebration! Featuring Ms. Rachel theme, music, venue map, and dress code.`,
+  title: `${eventConfig.celebrant.nickname} is Turning 1 | Birthday Invitation`,
+  description: `You are cordially invited to celebrate ${eventConfig.celebrant.fullName}'s 1st Birthday celebration.`,
   openGraph: {
-    title: `${eventConfig.celebrant.nickname} is Turning 1! 🎉`,
-    description: `Official 1st Birthday Invitation & RSVP for ${eventConfig.celebrant.fullName}`,
+    title: `${eventConfig.celebrant.nickname}'s 1st Birthday Celebration`,
+    description: `Official digital invitation & RSVP for ${eventConfig.celebrant.fullName}`,
     type: "website",
   },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#F472B6",
+  themeColor: "#FAF7F2",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -40,8 +40,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${fredoka.variable} ${quicksand.variable}`}>
-      <body className="bg-rachel-pattern antialiased selection:bg-rachel-pink-light selection:text-rachel-pink-dark">
+    <html lang="en" className={`${fraunces.variable} ${plusJakartaSans.variable}`}>
+      <body className="bg-stationery font-sans text-stone-800 antialiased selection:bg-rose-100 selection:text-rose-900">
         {children}
       </body>
     </html>
