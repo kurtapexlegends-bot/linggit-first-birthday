@@ -1,8 +1,5 @@
-# Images Folder
+# Invitation artwork
 
-You can drop your real photos here anytime:
-- `ms-rachel.png` — Cutout photo of Ms. Rachel (optional: a high-res illustrated fallback is already included)
-- `linggit.png` — Baby Linggit's actual photo cutout (optional: cute toddler illustration with golden crown is already included)
-- `potty-tinay.png` — Potty Tinay image (optional: vector illustration already included)
+The WebP illustrations supply the sunshine cover, Ms. Rachel welcome, neighborhood map, and birthday cake.
 
-If an image is not provided or fails to load, the website automatically falls back to high-res vector graphics!
+Add Linggit’s portrait as `linggit.png` here and rebuild the site to include it with the invitation. Guests see a sunshine monogram when no portrait is available.

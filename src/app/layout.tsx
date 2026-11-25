@@ -1,49 +1,40 @@
 import type { Metadata, Viewport } from "next";
-import { Fraunces, Plus_Jakarta_Sans } from "next/font/google";
-import "./globals.css";
+import { Fredoka, Nunito } from "next/font/google";
 import { eventConfig } from "@/config/event-config";
+import "./globals.css";
 
-const fraunces = Fraunces({
+const display = Fredoka({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-fraunces",
+  weight: ["500", "600", "700"],
+  variable: "--font-display",
   display: "swap",
 });
 
-const plusJakartaSans = Plus_Jakarta_Sans({
+const body = Nunito({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-sans",
+  weight: ["500", "600", "700", "800"],
+  variable: "--font-body",
   display: "swap",
 });
+
+const title = `${eventConfig.celebrant.nickname} Turns One!`;
+const description = "Open Linggit’s Ms. Rachel storybook invitation for party details, outfit palette, directions, and RSVP.";
 
 export const metadata: Metadata = {
-  title: `${eventConfig.celebrant.nickname} is Turning 1 | Birthday Invitation`,
-  description: `You are cordially invited to celebrate ${eventConfig.celebrant.fullName}'s 1st Birthday celebration.`,
-  openGraph: {
-    title: `${eventConfig.celebrant.nickname}'s 1st Birthday Celebration`,
-    description: `Official digital invitation & RSVP for ${eventConfig.celebrant.fullName}`,
-    type: "website",
-  },
+  title,
+  description,
+  openGraph: { title, description, type: "website" },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#FAF7F2",
-  width: "device-width",
-  initialScale: 1,
-  maximumScale: 1,
+  viewportFit: "cover",
+  themeColor: "#FFFBF2",
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${fraunces.variable} ${plusJakartaSans.variable}`}>
-      <body className="bg-stationery font-sans text-stone-800 antialiased selection:bg-rose-100 selection:text-rose-900">
-        {children}
-      </body>
+    <html lang="en" className={`${display.variable} ${body.variable}`}>
+      <body>{children}</body>
     </html>
   );
 }
