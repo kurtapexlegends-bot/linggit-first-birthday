@@ -64,3 +64,22 @@ export async function saveRsvp(fields: RsvpFields, options: { id?: string; editK
   }
   throw new Error("The guest list is busy. Try again.");
 }
+
+export async function deleteRsvp(id: string) {
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const { entries, revision } = await readEntries();
+    if (!entries.some((entry) => entry.id === id)) throw new RsvpNotFoundError();
+    const updated = entries.filter((entry) => entry.id !== id);
+    try {
+      await put(path, JSON.stringify(updated), {
+        access: "private", contentType: "application/json", addRandomSuffix: false,
+        allowOverwrite: Boolean(revision), ifMatch: revision || undefined,
+      });
+      return;
+    } catch (error) {
+      if (!(error instanceof BlobPreconditionFailedError)) throw error;
+      await new Promise((resolve) => setTimeout(resolve, 40 * (attempt + 1) + Math.random() * 35));
+    }
+  }
+  throw new Error("The guest list is busy. Try again.");
+}

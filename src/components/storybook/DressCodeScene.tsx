@@ -84,6 +84,10 @@ export function DressCodeScene({ settings, onNext }: DressCodeSceneProps) {
 
       {/* Right: Floating Swinging Hanger & Neutral Cloud Swatches (No Boxy Card!) */}
       <div className="flex-1 flex flex-col items-center text-center gap-4 max-w-xl">
+        <h2 className="font-storybook text-2xl sm:text-3xl font-bold text-[#2e221d] leading-tight">
+          {settings.dressHeading}
+        </h2>
+
         {/* Swinging Outfit Prop Floating Directly in the Sky */}
         <div className="relative flex flex-col items-center">
           {/* Wooden Rod */}

@@ -1,12 +1,15 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
-import { ArrowLeft, ArrowUpRight, CalendarDays, Check, Clipboard, Eye, EyeOff, Image, ImagePlus, LayoutDashboard, LogOut, MapPin, Music2, Pencil, Plus, Sun, Trash2, Users } from "lucide-react";
-import { invitationMediaUrl, invitationSettingsSchema, MAX_MEDIA_BYTES, type InvitationSettings, type MediaSlot } from "@/lib/invitation-settings";
+import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
+import { ArrowUpRight, Check, Eye, EyeOff, Image, LayoutDashboard, LogOut, Pencil, RotateCcw, Sun, Users } from "lucide-react";
+import { invitationSettingsSchema, MAX_MEDIA_BYTES, type InvitationSettings, type MediaSlot } from "@/lib/invitation-settings";
 import type { RsvpEntry, RsvpFields } from "@/lib/rsvp";
-import { formatHeadcount, GuestBoard, guestTotals, manilaTimestamp } from "./rsvp-board";
+import { GuestBoard } from "./rsvp-board";
 import { InvitationPreview, invitationSections, type InvitationSection } from "./invitation-preview";
-import styles from "./editor.module.css";
+import { InvitationFormSections, InvitationSectionTabs, MediaPanel, type TextKey } from "./invitation-form";
+import { OverviewPanel, type CopyLinkState } from "./overview-panel";
+
+export { KingkongSignIn } from "./sign-in";
 
 async function request(path: string, init: RequestInit) {
   const response = await fetch(`/api/kingkong/${path}`, init);
@@ -19,59 +22,7 @@ function errorMessage(error: unknown) {
   return error instanceof Error ? error.message : "Something went wrong. Try again.";
 }
 
-export function KingkongSignIn() {
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
-  const [ready, setReady] = useState(false);
-  useEffect(() => setReady(true), []);
-
-  async function signIn(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const key = new FormData(event.currentTarget).get("key");
-    setBusy(true);
-    setError("");
-    try {
-      await request("session", {
-        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ key }),
-      });
-      location.replace(location.pathname + location.search);
-    } catch (cause) {
-      setError(errorMessage(cause));
-      setBusy(false);
-    }
-  }
-
-  return <div className={styles.signInShell}>
-    <main className={styles.signIn}>
-      <div className={styles.signInContent}>
-        <span className={styles.brandMark}><Sun size={22} aria-hidden="true" /></span>
-        <h1>Party dashboard</h1>
-        <p>Enter your access key to manage the invitation and guest replies.</p>
-        <form method="post" onSubmit={signIn}>
-          <label>Access key <input name="key" type="password" autoComplete="current-password" required maxLength={128} /></label>
-          {error && <p className={styles.error} role="alert">{error}</p>}
-          <button className="button button-primary" disabled={!ready || busy}>{busy ? "Signing in…" : "Sign in"}</button>
-        </form>
-        <a className="text-link" href="/"><ArrowLeft size={15} aria-hidden="true" /> Back to the invitation</a>
-      </div>
-    </main>
-    <img className={styles.signInArt} src="/images/sunshine-storybook.webp" alt="" />
-  </div>;
-}
-
-type TextKey = Exclude<keyof InvitationSettings, "swatches" | "program" | "media">;
-const mediaSlots: { key: MediaSlot; title: string; hint: string }[] = [
-  { key: "portrait", title: "Birthday portrait", hint: "Portrait photos work best." },
-  { key: "cover", title: "Cover artwork", hint: "Use a wide image with the subject on the right." },
-  { key: "music", title: "Background music", hint: "MP3, up to 4 MB." },
-];
-
-function Panel({ id, title, hidden, children }: { id: string; title: string; hidden?: boolean; children: ReactNode }) {
-  return <section id={id} className={styles.panel} hidden={hidden}><h2>{title}</h2>{children}</section>;
-}
-
 async function prepareImage(file: File) {
-  // Decode and re-encode phone images before the request hits Vercel's body limit.
   const image = await createImageBitmap(file);
   try {
     const scale = Math.min(1, 1800 / Math.max(image.width, image.height));
@@ -81,7 +32,7 @@ async function prepareImage(file: File) {
     const ctx = canvas.getContext("2d");
     if (!ctx) throw new Error("This browser could not prepare the image.");
     ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
-    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/webp", .84));
+    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/webp", 0.84));
     if (!blob) throw new Error("This image could not be prepared.");
     return new File([blob], blob.type === "image/webp" ? "photo.webp" : "photo.png", { type: blob.type });
   } finally {
@@ -89,20 +40,115 @@ async function prepareImage(file: File) {
   }
 }
 
+const fieldLabels: Record<string, string> = {
+  nickname: "Birthday name",
+  date: "Party date",
+  start: "Start time (Manila)",
+  end: "End time (Manila)",
+  timeNote: "Time note",
+  coverIntro: "Cover message",
+  welcomeMessage: "Welcome message",
+  venueName: "Venue name",
+  hall: "Room or hall",
+  address: "Address",
+  landmarks: "Landmarks and parking",
+  mapsUrl: "Google Maps link",
+  wazeUrl: "Waze link",
+  dressHeading: "Dress code heading",
+  dressIntro: "Outfit instructions",
+  swatches: "Color swatches",
+  program: "Party program",
+  deadline: "RSVP deadline",
+  whatsapp: "Host WhatsApp number",
+};
+
+const nestedFieldLabels: Record<string, string> = {
+  hex: "Color",
+  name: "Name",
+  tip: "Outfit tip",
+  time: "Time",
+  title: "Activity",
+  description: "Description",
+};
+
+function formatValidationPath(path: PropertyKey[], fallbackLabel?: string) {
+  const top = String(path[0] ?? "");
+  if ((top === "swatches" || top === "program") && typeof path[1] === "number") {
+    const rowLabel = top === "swatches" ? `Swatch ${path[1] + 1}` : `Activity ${path[1] + 1}`;
+    const nested = typeof path[2] === "string" ? nestedFieldLabels[path[2]] : undefined;
+    return nested ? `${rowLabel} · ${nested}` : rowLabel;
+  }
+  return fieldLabels[top] ?? fallbackLabel ?? "Invitation";
+}
+
+function mergeDraftSettings(raw: unknown, fallback: InvitationSettings): InvitationSettings {
+  if (!raw || typeof raw !== "object") return fallback;
+  const candidate = raw as Partial<InvitationSettings>;
+  const merged: InvitationSettings = { ...fallback };
+  const stringKeys: TextKey[] = [
+    "nickname",
+    "coverIntro",
+    "welcomeMessage",
+    "date",
+    "start",
+    "end",
+    "timeNote",
+    "venueName",
+    "hall",
+    "address",
+    "landmarks",
+    "mapsUrl",
+    "wazeUrl",
+    "dressHeading",
+    "dressIntro",
+    "deadline",
+    "whatsapp",
+  ];
+  for (const key of stringKeys) {
+    if (typeof candidate[key] === "string") merged[key] = candidate[key];
+  }
+  if (Array.isArray(candidate.swatches) && candidate.swatches.length) {
+    merged.swatches = candidate.swatches.map((item, idx) => ({
+      name: typeof item?.name === "string" ? item.name : fallback.swatches[idx]?.name ?? "",
+      hex: typeof item?.hex === "string" ? item.hex : fallback.swatches[idx]?.hex ?? "#f5f2eb",
+      tip: typeof item?.tip === "string" ? item.tip : "",
+    }));
+  }
+  if (Array.isArray(candidate.program)) {
+    merged.program = candidate.program.map((item) => ({
+      time: typeof item?.time === "string" ? item.time : "",
+      title: typeof item?.title === "string" ? item.title : "",
+      description: typeof item?.description === "string" ? item.description : "",
+    }));
+  }
+  if (candidate.media && typeof candidate.media === "object") {
+    merged.media = {
+      portrait: typeof candidate.media.portrait === "string" ? candidate.media.portrait : fallback.media.portrait,
+      cover: typeof candidate.media.cover === "string" ? candidate.media.cover : fallback.media.cover,
+      music: typeof candidate.media.music === "string" ? candidate.media.music : fallback.media.music,
+    };
+  }
+  return merged;
+}
+
 const views = [
-  { id: "overview", label: "Overview", icon: LayoutDashboard },
-  { id: "guests", label: "Guest replies", icon: Users },
-  { id: "invitation", label: "Invitation", icon: Pencil },
-  { id: "media", label: "Media", icon: Image },
+  { id: "overview", label: "Overview", mobileLabel: "Overview", icon: LayoutDashboard },
+  { id: "guests", label: "Guest replies", mobileLabel: "Replies", icon: Users },
+  { id: "invitation", label: "Invitation", mobileLabel: "Edit", icon: Pencil },
+  { id: "media", label: "Media", mobileLabel: "Media", icon: Image },
 ] as const;
+
 type View = (typeof views)[number]["id"];
 const draftStorageKey = "kingkong-invitation-draft";
 const dashboardView = (value?: string | null): View => views.find((entry) => entry.id === value)?.id ?? "overview";
-const eventDate = new Intl.DateTimeFormat("en-PH", {
-  weekday: "long", month: "long", day: "numeric", year: "numeric", timeZone: "Asia/Manila",
-});
 
-export function KingkongEditor({ initial, initialRevision, initialPublishedAt, initialEntries, initialView }: {
+export function KingkongEditor({
+  initial,
+  initialRevision,
+  initialPublishedAt,
+  initialEntries,
+  initialView,
+}: {
   initial: InvitationSettings;
   initialRevision: string | null;
   initialPublishedAt: string | null;
@@ -123,36 +169,43 @@ export function KingkongEditor({ initial, initialRevision, initialPublishedAt, i
   const [entries, setEntries] = useState(initialEntries);
   const [loadingEntries, setLoadingEntries] = useState(false);
   const [entriesError, setEntriesError] = useState("");
-  const [linkFeedback, setLinkFeedback] = useState("");
+  const [linkState, setLinkState] = useState<CopyLinkState>({ kind: "idle", text: "" });
+  const copyTimerRef = useRef<number>();
   const refreshSequence = useRef(0);
   const [ready, setReady] = useState(false);
   const dirty = JSON.stringify(saved) !== JSON.stringify(draft);
-  const totals = guestTotals(entries ?? []);
 
   useEffect(() => {
     try {
       const stored = JSON.parse(sessionStorage.getItem(draftStorageKey) ?? "null");
-      if (stored?.revision === initialRevision) {
-        const restored = invitationSettingsSchema.safeParse(stored.settings);
-        if (restored.success) setDraft(restored.data);
+      if (stored?.revision === initialRevision && stored?.settings) {
+        setDraft(mergeDraftSettings(stored.settings, initial));
       }
     } catch {
       // Editing is still available with storage disabled.
     }
     setReady(true);
-  }, [initialRevision]);
+    return () => window.clearTimeout(copyTimerRef.current);
+  }, [initial, initialRevision]);
 
   useEffect(() => {
     if (!ready) return;
     try {
       if (!dirty) sessionStorage.removeItem(draftStorageKey);
-      else if (invitationSettingsSchema.safeParse(draft).success) {
-        sessionStorage.setItem(draftStorageKey, JSON.stringify({ revision, settings: draft }));
-      }
+      else sessionStorage.setItem(draftStorageKey, JSON.stringify({ revision, settings: draft }));
     } catch {
       // Keep the current draft in memory.
     }
   }, [dirty, draft, ready, revision]);
+
+  useEffect(() => {
+    if (!dirty) return;
+    const warnUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+    };
+    window.addEventListener("beforeunload", warnUnload);
+    return () => window.removeEventListener("beforeunload", warnUnload);
+  }, [dirty]);
 
   const refreshReplies = useCallback(async () => {
     const sequence = ++refreshSequence.current;
@@ -203,36 +256,41 @@ export function KingkongEditor({ initial, initialRevision, initialPublishedAt, i
 
   async function saveReply(fields: RsvpFields, id: string, create: boolean) {
     const { entry }: { entry: RsvpEntry } = await request("rsvps", {
-      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, create, fields }),
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, create, fields }),
     });
-    setEntries((current) => current ? [entry, ...current.filter((item) => item.id !== entry.id)] : current);
+    setEntries((current) => (current ? [entry, ...current.filter((item) => item.id !== entry.id)] : current));
+    await refreshReplies();
+  }
+
+  async function deleteReply(id: string) {
+    await request("rsvps", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    });
+    setEntries((current) => (current ? current.filter((item) => item.id !== id) : current));
     await refreshReplies();
   }
 
   async function copyGuestLink() {
     const link = new URL("/#rsvp", window.location.origin).href;
+    window.clearTimeout(copyTimerRef.current);
     try {
       await navigator.clipboard.writeText(link);
-      setLinkFeedback("RSVP link copied.");
+      setLinkState({ kind: "copied", text: "RSVP link copied." });
+      copyTimerRef.current = window.setTimeout(() => {
+        setLinkState({ kind: "idle", text: "" });
+      }, 2500);
     } catch {
-      setLinkFeedback(link);
+      setLinkState({ kind: "fallback", text: link });
     }
   }
 
-  function setText(key: TextKey, value: string) {
+  function handleTextChange(key: TextKey, value: string) {
     setDraft((current) => ({ ...current, [key]: value }));
     setError("");
-  }
-
-  function field(key: TextKey, label: string, options: { type?: string; multiline?: boolean; limit?: number; optional?: boolean } = {}) {
-    return (
-      <label data-setting={key} className={options.multiline ? styles.full : undefined}>
-        {label}
-        {options.multiline
-          ? <textarea rows={3} value={draft[key]} onChange={(event) => setText(key, event.target.value)} maxLength={options.limit} required={!options.optional} />
-          : <input type={options.type ?? "text"} value={draft[key]} onChange={(event) => setText(key, event.target.value)} maxLength={options.limit} required={!options.optional} />}
-      </label>
-    );
   }
 
   function setMedia(slot: MediaSlot, name: string) {
@@ -266,15 +324,23 @@ export function KingkongEditor({ initial, initialRevision, initialPublishedAt, i
     const validated = invitationSettingsSchema.safeParse(draft);
     if (!validated.success) {
       const first = validated.error.issues[0];
-      const key = String(first.path[0] ?? "");
-      const group = invitationSections.find((item) => item.keys.some((field) => field === key));
+      const topKey = String(first.path[0] ?? "");
+      const fullPath = first.path.map(String).join(".");
+      const group = invitationSections.find((item) => item.keys.some((field) => field === topKey));
       if (group) {
-        selectView("invitation");
+        if (view !== "invitation") selectView("invitation");
         setSection(group.id);
-        window.requestAnimationFrame(() => document.querySelector<HTMLElement>(`[data-setting="${CSS.escape(key)}"] :is(input,textarea)`)?.focus());
+        window.requestAnimationFrame(() => {
+          window.requestAnimationFrame(() => {
+            const target =
+              document.querySelector<HTMLElement>(`[data-setting="${CSS.escape(fullPath)}"] :is(input,textarea)`) ??
+              document.querySelector<HTMLElement>(`[data-setting="${CSS.escape(topKey)}"] :is(input,textarea)`);
+            target?.focus();
+          });
+        });
       }
-      const fieldLabel = document.querySelector(`[data-setting="${CSS.escape(key)}"]`)?.firstChild?.textContent?.trim();
-      setError(`${fieldLabel || group?.label || "Invitation"}. ${first.message}`);
+      const label = formatValidationPath(first.path, group?.label);
+      setError(`${label}. ${first.message}`);
       return;
     }
     setBusy("publish");
@@ -282,7 +348,8 @@ export function KingkongEditor({ initial, initialRevision, initialPublishedAt, i
     setMessage("");
     try {
       const result = await request("settings", {
-        method: "PUT", headers: { "Content-Type": "application/json" },
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ settings: validated.data, revision }),
       });
       setRevision(result.revision);
@@ -301,7 +368,11 @@ export function KingkongEditor({ initial, initialRevision, initialPublishedAt, i
     setBusy("logout");
     try {
       await request("session", { method: "DELETE" });
-      try { sessionStorage.removeItem(draftStorageKey); } catch { /* storage is optional */ }
+      try {
+        sessionStorage.removeItem(draftStorageKey);
+      } catch {
+        // Storage is optional
+      }
       location.replace("/kingkong");
     } catch (cause) {
       setError(errorMessage(cause));
@@ -316,197 +387,263 @@ export function KingkongEditor({ initial, initialRevision, initialPublishedAt, i
     setMessage("Draft discarded.");
   }
 
-  return (
-    <div className={styles.editor}>
-      <aside className={styles.rail}>
-        <div className={styles.brand}>
-          <span className={styles.brandMark}><Sun size={21} aria-hidden="true" /></span>
-          <div><strong>{saved.nickname} turns one</strong><span>Party dashboard</span></div>
-        </div>
-        <nav className={styles.navigation} aria-label="Dashboard sections">
-          {views.map(({ id, label, icon: Icon }) => (
-            <button key={id} type="button" aria-current={view === id ? "page" : undefined} onClick={() => selectView(id)}>
-              <Icon size={17} aria-hidden="true" /> {label}
-            </button>
-          ))}
-        </nav>
-        <button className={styles.signOut} type="button" disabled={Boolean(busy)} onClick={signOut}><LogOut size={17} aria-hidden="true" /> Sign out</button>
-      </aside>
-      <main className={styles.workspace}>
-        <header className={styles.header}>
-          <h1>Party dashboard</h1>
-          <div>
-            {dirty && <span className={styles.draftBadge}>Unpublished changes</span>}
-            <a className={`button button-outline ${styles.liveLink}`} href="/" target="_blank" rel="noreferrer">View invitation <ArrowUpRight size={15} aria-hidden="true" /></a>
-          </div>
-        </header>
-        <div className={styles.content}>
-      {error && (view === "overview" || view === "guests") && <p role="alert" className={styles.error}>{error}</p>}
+  const activeViewLabel = views.find((item) => item.id === view)?.label ?? "Party dashboard";
 
-      {view === "overview" && <section className={styles.dashboardSection} aria-labelledby="overview-title">
-        <div className={styles.overviewHero}>
-          <div>
-            <h2 id="overview-title">Party overview</h2>
-          </div>
-          <div className={styles.overviewActions}>
-            <button type="button" className="button button-primary" onClick={() => selectView("guests")}>View guest replies</button>
-            <button type="button" className="button button-outline" onClick={copyGuestLink}><Clipboard size={16} aria-hidden="true" /> Copy RSVP link</button>
-            {linkFeedback && <p role="status">{linkFeedback}</p>}
-          </div>
-        </div>
-        <div className={styles.metrics} aria-label="RSVP totals">
-          <div><span>Expected guests</span><strong>{entries ? totals.adults + totals.children : "—"}</strong><small>{entries ? formatHeadcount(totals.adults, totals.children) : "Guest list unavailable"}</small></div>
-          <div><span>Attending replies</span><strong>{entries ? totals.attending : "—"}</strong></div>
-          <div><span>Declined replies</span><strong>{entries ? totals.declined : "—"}</strong></div>
-        </div>
-        {entriesError && <p role="alert" className={styles.error}>{entriesError}</p>}
-        <div className={styles.overviewColumns}>
-          <section className={styles.activity}>
-            <div className={styles.sectionHeading}><h2>Recent replies</h2><button className="text-link" type="button" onClick={() => selectView("guests")}>See all <ArrowUpRight size={15} aria-hidden="true" /></button></div>
-            {entries?.length ? <ul className={styles.recent}>
-              {entries.slice(0, 4).map((entry) => <li key={entry.id}><button type="button" onClick={() => { selectView("guests"); setSelectedReply(entry); }}>
-                <span><strong>{entry.name}</strong><small>{manilaTimestamp(entry.updatedAt)}</small></span>
-                <span className={styles.replyStatus} data-attending={entry.attending}>{entry.attending ? "Attending" : "Declined"}</span>
-              </button></li>)}
-            </ul> : <div className={styles.activityEmpty}><span><Users size={21} aria-hidden="true" /></span><h3>{entries === null ? "Replies could not load" : "No RSVPs yet"}</h3><p>{entries === null ? "Open Guest replies to retry." : "Guest names and responses will appear here."}</p></div>}
-          </section>
-          <section className={styles.eventCard} aria-labelledby="event-summary-title">
-            <img src={invitationMediaUrl(saved.media.cover) || "/images/sunshine-phone.webp"} alt="" />
-            <div>
-              <h2 id="event-summary-title">{saved.nickname}’s first birthday</h2>
-              <p><CalendarDays size={15} aria-hidden="true" />{eventDate.format(new Date(`${saved.date}T12:00:00+08:00`))}</p>
-              <p><MapPin size={15} aria-hidden="true" />{saved.venueName}</p>
-              <div className={styles.eventFooter}>
-                <span>{publishedAt ? `Published ${manilaTimestamp(publishedAt)}` : "Invitation live"}</span>
-                <button className="text-link" type="button" onClick={() => selectView("invitation")}>Edit invitation <Pencil size={14} aria-hidden="true" /></button>
+  return (
+    <div className="min-h-[100svh] bg-[#fffbf2] text-[#2e221d] grid grid-cols-1 md:grid-cols-[248px_minmax(0,1fr)]">
+      {/* Desktop Sticky Left Sidebar / Mobile Compact Top Nav */}
+      <aside className="bg-[#fffdf8] border-b md:border-b-0 md:border-r border-[#e7dcc8] md:sticky md:top-0 md:h-[100svh] flex flex-col justify-between p-3.5 sm:p-4 gap-3 z-30">
+        <div className="space-y-3.5">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <span className="w-10 h-10 rounded-2xl bg-[#fbe07b]/75 border border-[#e3bf75]/60 text-[#9e3359] flex items-center justify-center shrink-0">
+                <Sun className="w-5 h-5 stroke-[2.3]" aria-hidden="true" />
+              </span>
+              <div className="min-w-0">
+                <strong className="block font-storybook text-base font-bold text-[#2e221d] truncate">
+                  {saved.nickname} turns one
+                </strong>
+                <span className="block text-[11px] font-bold text-[#645147] truncate">Party dashboard</span>
               </div>
             </div>
-          </section>
+
+            <button
+              type="button"
+              disabled={Boolean(busy)}
+              onClick={signOut}
+              className="md:hidden inline-flex items-center gap-1.5 min-h-[38px] px-3 rounded-full bg-white border border-[#dfd2be] text-xs font-extrabold text-[#645147] hover:text-[#2e221d] shrink-0"
+            >
+              <LogOut className="w-3.5 h-3.5" aria-hidden="true" />
+              Sign out
+            </button>
+          </div>
+
+          <nav aria-label="Dashboard sections" className="grid grid-cols-4 md:grid-cols-1 gap-1.5">
+            {views.map(({ id, label, mobileLabel, icon: Icon }) => {
+              const active = view === id;
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  aria-current={active ? "page" : undefined}
+                  onClick={() => selectView(id)}
+                  className={`relative flex flex-col sm:flex-row md:flex-row items-center justify-center md:justify-between gap-1 sm:gap-2 min-h-[48px] md:min-h-[42px] px-1.5 sm:px-2.5 md:px-3.5 py-1.5 md:py-0 rounded-xl text-[11px] sm:text-xs font-extrabold transition-colors ${
+                    active
+                      ? "bg-[#fadce6] text-[#9e3359]"
+                      : "text-[#645147] hover:bg-[#fff6e2] hover:text-[#2e221d]"
+                  }`}
+                >
+                  <span className="flex flex-col sm:flex-row items-center gap-0.5 sm:gap-2 min-w-0">
+                    <Icon className="w-4 h-4 shrink-0" aria-hidden="true" />
+                    <span className="md:hidden truncate">{mobileLabel}</span>
+                    <span className="hidden md:inline truncate">{label}</span>
+                  </span>
+                  {id === "guests" && entries && (
+                    <span className="hidden sm:inline-flex px-2 py-0.5 rounded-full bg-white/90 border border-[#e7dcc8] text-[10px] font-extrabold text-[#2e221d]">
+                      {entries.length}
+                    </span>
+                  )}
+                  {id === "guests" && entries && (
+                    <span className="sm:hidden absolute top-1.5 right-1.5 px-1.5 py-0.2 rounded-full bg-white/95 border border-[#e7dcc8] text-[9px] font-extrabold text-[#2e221d]">
+                      {entries.length}
+                    </span>
+                  )}
+                  {id === "invitation" && dirty && (
+                    <span
+                      className="absolute top-2 right-2 md:static inline-block w-2 h-2 rounded-full bg-[#c9841a]"
+                      aria-hidden="true"
+                    />
+                  )}
+                </button>
+              );
+            })}
+          </nav>
         </div>
-      </section>}
-      {view === "guests" && <GuestBoard entries={entries} initialReply={selectedReply} loading={loadingEntries} error={entriesError} onRefresh={() => void refreshReplies()} onSave={saveReply} />}
 
-      <form onSubmit={publish} noValidate hidden={view !== "invitation" && view !== "media"}>
-        <div className={styles.viewHeading}>
-          <div><h2>{view === "media" ? "Media" : "Invitation"}</h2>
-          <p>{view === "media" ? "Manage the photos and music guests see and hear." : "Review your changes before publishing them to guests."}</p></div>
-          {view === "invitation" && <button type="button" className={`button button-outline ${styles.previewToggle}`} aria-expanded={previewOpen} aria-controls="invitation-preview" onClick={() => setPreviewOpen(!previewOpen)}>
-            {previewOpen ? <EyeOff size={16} aria-hidden="true" /> : <Eye size={16} aria-hidden="true" />} {previewOpen ? "Hide preview" : "Preview draft"}
-          </button>}
+        <div className="hidden md:flex flex-col gap-2 pt-4 border-t border-[#e7dcc8]/80">
+          <a
+            href="/"
+            target="_blank"
+            rel="noreferrer"
+            className="flex items-center justify-between gap-2 min-h-[40px] px-3.5 rounded-xl bg-[#fff8ea] hover:bg-[#fbe07b]/40 border border-[#e7dcc8] text-xs font-extrabold text-[#2e221d] transition-colors"
+          >
+            <span>View live site</span>
+            <ArrowUpRight className="w-3.5 h-3.5 text-[#9e3359]" aria-hidden="true" />
+          </a>
+          <button
+            type="button"
+            disabled={Boolean(busy)}
+            onClick={signOut}
+            className="flex items-center gap-2 min-h-[40px] px-3.5 rounded-xl text-xs font-extrabold text-[#645147] hover:bg-[#fadce6]/50 hover:text-[#9e3359] transition-colors disabled:opacity-45"
+          >
+            <LogOut className="w-4 h-4" aria-hidden="true" />
+            Sign out
+          </button>
         </div>
-        {view === "invitation" && <nav aria-label="Invitation sections" className={styles.formNavigation}>
-          {invitationSections.map(({ id, label }) => <button key={id} type="button" aria-pressed={section === id} onClick={() => setSection(id)}>{label}</button>)}
-        </nav>}
-        <fieldset className={styles.fields} disabled={!ready || busy === "publish" || busy === "logout"}>
-          <div className={styles.invitationWorkbench} hidden={view !== "invitation"}>
-          <div className={styles.fields}>
-          <Panel id="details" title="Cover & party details" hidden={section !== "details"}>
-            <div className={styles.grid}>
-              {field("nickname", "Birthday name", { limit: 30 })}
-              {field("date", "Party date", { type: "date" })}
-              {field("start", "Start time (Manila)", { type: "time" })}
-              {field("end", "End time (Manila)", { type: "time" })}
-              {field("timeNote", "Time note", { limit: 150, optional: true })}
-              {field("coverIntro", "Cover message", { multiline: true, limit: 180 })}
-              {field("welcomeMessage", "Welcome message", { multiline: true, limit: 450 })}
-            </div>
-          </Panel>
+      </aside>
 
-          <Panel id="location" title="Venue and directions" hidden={section !== "location"}>
-            <div className={styles.grid}>
-              {field("venueName", "Venue name", { limit: 140 })}
-              {field("hall", "Room or hall", { limit: 140, optional: true })}
-              {field("address", "Address", { multiline: true, limit: 240 })}
-              {field("landmarks", "Landmarks and parking", { multiline: true, limit: 350, optional: true })}
-              {field("mapsUrl", "Google Maps link", { type: "url", optional: true })}
-              {field("wazeUrl", "Waze link", { type: "url", optional: true })}
-            </div>
-          </Panel>
-
-          <Panel id="outfits" title="Dress code" hidden={section !== "outfits"}>
-            <div className={styles.grid}>
-              {field("dressHeading", "Heading", { limit: 62 })}
-              {field("dressIntro", "Outfit instructions", { multiline: true, limit: 300 })}
-            </div>
-            <div className={styles.list}>
-              {draft.swatches.map((swatch, index) => (
-                <div key={index} className={styles.swatch}>
-                  <label>Color <input type="color" value={swatch.hex} onChange={({ target }) => setDraft((current) => ({ ...current, swatches: current.swatches.map((item, i) => i === index ? { ...item, hex: target.value } : item) }))} /></label>
-                  <label>Name <input required maxLength={32} value={swatch.name} onChange={({ target }) => setDraft((current) => ({ ...current, swatches: current.swatches.map((item, i) => i === index ? { ...item, name: target.value } : item) }))} /></label>
-                  <label>Outfit tip <input maxLength={150} value={swatch.tip} onChange={({ target }) => setDraft((current) => ({ ...current, swatches: current.swatches.map((item, i) => i === index ? { ...item, tip: target.value } : item) }))} /></label>
-                  <button type="button" className={styles.remove} aria-label={`Remove color ${index + 1}`} disabled={draft.swatches.length <= 1} onClick={() => setDraft((current) => ({ ...current, swatches: current.swatches.filter((_, i) => i !== index) }))}><Trash2 size={17} /></button>
-                </div>
-              ))}
-            </div>
-            <button type="button" className="text-link" disabled={draft.swatches.length >= 6} onClick={() => setDraft((current) => ({ ...current, swatches: [...current.swatches, { name: "", hex: "#f5f2eb", tip: "" }] }))}><Plus size={16} /> Add color</button>
-          </Panel>
-
-          <Panel id="schedule" title="Party program" hidden={section !== "schedule"}>
-            <div className={styles.list}>
-              {draft.program.map((item, index) => (
-                <div className={styles.program} key={index}>
-                  {(["time", "title", "description"] as const).map((key) => (
-                    <label key={key}>{key === "time" ? "Time" : key === "title" ? "Activity" : "Description"}
-                      <input value={item[key]} required={key !== "description"} maxLength={key === "time" ? 26 : key === "title" ? 100 : 250} onChange={({ target }) => setDraft((current) => ({ ...current, program: current.program.map((entry, i) => i === index ? { ...entry, [key]: target.value } : entry) }))} />
-                    </label>
-                  ))}
-                  <button type="button" className={styles.remove} aria-label={`Remove activity ${index + 1}`} onClick={() => setDraft((current) => ({ ...current, program: current.program.filter((_, i) => i !== index) }))}><Trash2 size={17} /></button>
-                </div>
-              ))}
-            </div>
-            <button type="button" className="text-link" disabled={draft.program.length >= 14} onClick={() => setDraft((current) => ({ ...current, program: [...current.program, { time: "", title: "", description: "" }] }))}><Plus size={16} /> Add activity</button>
-          </Panel>
-
-          <Panel id="contact" title="RSVP settings" hidden={section !== "contact"}>
-            <div className={styles.grid}>
-              {field("deadline", "RSVP deadline", { type: "date" })}
-              {field("whatsapp", "Host WhatsApp number with country code", { type: "tel", limit: 16, optional: true })}
-            </div>
-            <p className={styles.hint}>Leave the number blank to let guests choose the recipient in WhatsApp.</p>
-          </Panel>
+      {/* Main Workspace */}
+      <div className="min-w-0 flex flex-col">
+        <header className="sticky top-0 z-20 bg-[#fffbf2]/90 backdrop-blur-md border-b border-[#e7dcc8] px-4 sm:px-8 py-3.5 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <h1 className="font-storybook text-lg sm:text-xl font-bold text-[#2e221d] truncate">
+              {activeViewLabel}
+            </h1>
+            {dirty && (
+              <span className="px-2.5 py-1 rounded-full bg-[#fbe07b]/80 border border-[#e3bf75] text-[11px] font-extrabold text-[#70451e] shrink-0">
+                Unpublished changes
+              </span>
+            )}
           </div>
-          <div id="invitation-preview" data-shown={previewOpen} className={styles.previewColumn}>
-            {view === "invitation" && <InvitationPreview draft={draft} section={section} dirty={dirty} />}
-          </div>
-          </div>
-          <div hidden={view !== "media"}>
-          <Panel id="media" title="Photos and music">
-            <div className={styles.mediaGrid}>
-              {mediaSlots.map(({ key, title, hint }) => {
-                const source = invitationMediaUrl(draft.media[key]);
-                return (
-                  <div className={styles.media} key={key}>
-                    <h3>{title}</h3>
-                    <p className={styles.hint}>{draft.media[key] !== saved.media[key] ? "Ready to publish" : source ? "Published upload" : "Using default"}</p>
-                    {key === "music"
-                      ? source ? <audio controls preload="none" src={source} /> : <div className={styles.mediaPlaceholder}><Music2 size={29} aria-hidden="true" /></div>
-                      : source || key === "cover" ? <img loading="lazy" src={source || "/images/sunshine-phone.webp"} alt={source ? title : ""} /> : <div className={styles.mediaPlaceholder}><Sun size={29} aria-hidden="true" /></div>}
-                    <p className={styles.hint}>{hint}</p>
-                    <label className={styles.upload}>
-                      <ImagePlus size={16} aria-hidden="true" /> {busy === key ? "Uploading…" : source ? "Replace file" : "Upload file"}
-                      <input type="file" aria-label={`Upload ${title.toLowerCase()}`} accept={key === "music" ? ".mp3,audio/mpeg" : "image/*"} disabled={Boolean(busy)} onChange={(event) => { void upload(key, event.currentTarget.files?.[0]); event.currentTarget.value = ""; }} />
-                    </label>
-                    {source && <button className="text-link" type="button" disabled={Boolean(busy)} onClick={() => setMedia(key, "")}>Restore default</button>}
+
+          <a
+            href="/"
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1.5 min-h-[38px] px-4 rounded-full bg-white hover:bg-[#f8eed9] border border-[#dfd2be] text-xs font-extrabold text-[#2e221d] transition-colors shrink-0"
+          >
+            View invitation
+            <ArrowUpRight className="w-3.5 h-3.5 text-[#9e3359]" aria-hidden="true" />
+          </a>
+        </header>
+
+        <main className="flex-1 w-full max-w-[1320px] mx-auto px-4 sm:px-8 py-6 sm:py-8">
+          {error && (view === "overview" || view === "guests") && (
+            <p
+              role="alert"
+              className="mb-5 rounded-2xl bg-[#fadce6]/65 border border-[#c94b77]/35 px-4 py-3 text-xs font-bold text-[#9e3359]"
+            >
+              {error}
+            </p>
+          )}
+
+          {view === "overview" && (
+            <OverviewPanel
+              saved={saved}
+              publishedAt={publishedAt}
+              entries={entries}
+              entriesError={entriesError}
+              linkState={linkState}
+              onSelectView={selectView}
+              onSelectReply={setSelectedReply}
+              onCopyGuestLink={() => void copyGuestLink()}
+              onDismissLinkFallback={() => setLinkState({ kind: "idle", text: "" })}
+            />
+          )}
+
+          {view === "guests" && (
+            <GuestBoard
+              entries={entries}
+              initialReply={selectedReply}
+              loading={loadingEntries}
+              error={entriesError}
+              onRefresh={() => void refreshReplies()}
+              onSave={saveReply}
+              onDelete={deleteReply}
+            />
+          )}
+
+          <form onSubmit={publish} noValidate hidden={view !== "invitation" && view !== "media"} className="space-y-5">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+              <div>
+                <span className="inline-flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-wider text-[#9e3359]">
+                  {view === "media" ? "Storybook assets" : "Storybook copy & details"}
+                </span>
+                <h2 className="font-storybook text-2xl sm:text-3xl font-bold text-[#2e221d] mt-0.5">
+                  {view === "media" ? "Media" : "Invitation"}
+                </h2>
+                <p className="text-sm font-semibold text-[#645147] mt-1">
+                  {view === "media"
+                    ? "Manage the portrait, opening cover, and background track guests see and hear."
+                    : "Edit sections and review the live Pop-Up Theater preview before publishing."}
+                </p>
+              </div>
+
+              {view === "invitation" && (
+                <button
+                  type="button"
+                  aria-expanded={previewOpen}
+                  aria-controls="invitation-preview"
+                  onClick={() => setPreviewOpen((open) => !open)}
+                  className="xl:hidden inline-flex items-center gap-2 min-h-[40px] px-4 rounded-full bg-white hover:bg-[#f8eed9] border border-[#dfd2be] text-xs font-extrabold text-[#2e221d] self-start transition-colors"
+                >
+                  {previewOpen ? <EyeOff className="w-4 h-4 text-[#9e3359]" aria-hidden="true" /> : <Eye className="w-4 h-4 text-[#9e3359]" aria-hidden="true" />}
+                  {previewOpen ? "Hide preview" : "Preview draft"}
+                </button>
+              )}
+            </div>
+
+            {view === "invitation" && <InvitationSectionTabs section={section} onSelectSection={setSection} />}
+
+            <fieldset disabled={!ready || busy === "publish" || busy === "logout"} className="border-0 p-0 m-0 min-w-0">
+              {view === "invitation" && (
+                <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_380px] gap-6 items-start">
+                  <InvitationFormSections
+                    draft={draft}
+                    section={section}
+                    setDraft={setDraft}
+                    onTextChange={handleTextChange}
+                  />
+                  <div
+                    id="invitation-preview"
+                    data-shown={previewOpen}
+                    className={`${previewOpen ? "block" : "hidden"} xl:block xl:sticky xl:top-20`}
+                  >
+                    <InvitationPreview draft={draft} section={section} dirty={dirty} />
                   </div>
-                );
-              })}
-            </div>
-          </Panel>
-          </div>
-        </fieldset>
+                </div>
+              )}
 
-        <div className={styles.publishBar}>
-          <div>
-            {error ? <p className={styles.error} role="alert">{error}</p> : <p role="status">{message || (dirty ? "Unpublished changes" : "Up to date")}</p>}
-          </div>
-          <div className={styles.boardActions}>
-            {dirty && <button type="button" className="text-link" disabled={Boolean(busy)} onClick={discardDraft}>Discard draft</button>}
-            <button type="submit" className="button button-primary" disabled={!ready || !dirty || Boolean(busy)}><Check size={17} aria-hidden="true" /> {busy === "publish" ? "Publishing…" : "Publish changes"}</button>
-          </div>
-        </div>
-      </form>
-        </div>
-      </main>
+              {view === "media" && (
+                <MediaPanel
+                  draft={draft}
+                  saved={saved}
+                  busy={busy}
+                  onUpload={(slot, file) => void upload(slot, file)}
+                  onRestoreDefault={(slot) => setMedia(slot, "")}
+                />
+              )}
+            </fieldset>
+
+            {/* Sticky Bottom Publish Bar */}
+            <div className="sticky bottom-3 z-20 rounded-2xl border border-[#e7dcc8] bg-[#fffdf8]/95 backdrop-blur-md px-4 sm:px-5 py-3 shadow-md flex flex-wrap items-center justify-between gap-3">
+              <div className="min-w-0">
+                {error ? (
+                  <p role="alert" className="text-xs font-extrabold text-[#9e3359]">
+                    {error}
+                  </p>
+                ) : (
+                  <p role="status" className="text-xs font-bold text-[#645147]">
+                    {message || (dirty ? "You have unpublished changes ready to go live." : "All published changes are live.")}
+                  </p>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2.5">
+                {dirty && (
+                  <button
+                    type="button"
+                    disabled={Boolean(busy)}
+                    onClick={discardDraft}
+                    className="inline-flex items-center gap-1.5 min-h-[40px] px-4 rounded-full bg-white hover:bg-[#fadce6]/60 border border-[#dfd2be] text-xs font-extrabold text-[#9e3359] transition-colors disabled:opacity-45"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" />
+                    Discard draft
+                  </button>
+                )}
+                <button
+                  type="submit"
+                  disabled={!ready || !dirty || Boolean(busy)}
+                  className="inline-flex items-center gap-1.5 min-h-[42px] px-5 rounded-full bg-[#c94b77] hover:bg-[#9e3359] text-xs font-extrabold text-[#fffbf2] shadow-sm transition-colors disabled:opacity-45"
+                >
+                  <Check className="w-4 h-4" aria-hidden="true" />
+                  {busy === "publish" ? "Publishing…" : "Publish changes"}
+                </button>
+              </div>
+            </div>
+          </form>
+        </main>
+      </div>
     </div>
   );
 }
