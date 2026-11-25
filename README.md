@@ -4,34 +4,12 @@ A joyful, animated Ms. Rachel themed interactive digital invitation for **Linggi
 
 ---
 
-## 🌟 Key Features
+## Invitation features
 
-1. **Interactive Envelope Hero:**
-   - Tap-to-open 3D envelope with paper textures, golden wax seal, unfolding animation, and celebration confetti.
-   - User gesture automatically unlocks browser audio playback.
-2. **"You Are My Sunshine" Background Music:**
-   - Built-in, zero-dependency Web Audio API music-box lullaby playing the real melody of *"You Are My Sunshine"*.
-   - Drop-in MP3 support: placing `you-are-my-sunshine.mp3` inside `public/audio/` will automatically use your custom audio file.
-   - Persistent top-right floating mute/unmute control.
-3. **Ms. Rachel Welcome & Dress Code Guide:**
-   - Ms. Rachel greets guests with comic speech bubbles and pop sound effects.
-   - Interactive neutral dress code palette swatches (Cream, Warm Taupe, Light Khaki, Sage, Clean White) with one-click HEX copying and outfit tips.
-4. **Venue Pin with Pointing Ms. Rachel:**
-   - Stylized venue map featuring a bouncing radar location pin.
-   - Ms. Rachel pointing directly to the pin.
-   - One-click navigation buttons for **Google Maps** and **Waze**.
-5. **Baby Linggit's Grand Reveal:**
-   - Dramatic entrance animation: *"Linggit is turning 1! You are invited!"* with golden birthday crown and confetti.
-6. **"Potty Tinay" & 1st Milestones Card:**
-   - Dedicated spotlight on Linggit's favorite Ms. Rachel song: **Potty Tinay**.
-   - Interactive Potty Tinay character with cute chime sound on tap.
-   - First-year stats: 365 Days of Joy, 6 Pearly Teeth, Cruising & Walking.
-7. **RSVP & Event Program Hub:**
-   - Expandable timeline of events (Welcome, Grand Entrance, Themed Games, Cake Ceremony).
-   - In-app RSVP form (Guest Name, Adult & Kid count, Birthday message).
-   - Instant WhatsApp/Messenger backup confirmation link.
-   - "Add to Calendar" (.ics export for Apple Calendar, Google Calendar, Outlook).
-   - "Replay from Envelope" button.
+- An illustrated sunshine cover with a tap-to-open envelope and optional music.
+- A Ms. Rachel welcome, interactive neutral outfit swatches, and a venue spread with Google Maps, Waze, and a calendar download.
+- A portrait frame for Linggit, a Potty Tinay chime, and a virtual birthday candle.
+- An expandable party program and an RSVP form that saves directly to the private guest list, with an optional WhatsApp copy.
 
 ---
 
@@ -45,27 +23,18 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ---
 
-## ⚙️ How to Customize Event Information
+## Customize the party
 
-All text, dates, times, venue locations, and dress codes are centralized in one single file:
-👉 [src/config/event-config.ts](file:///C:/Users/acost/.gemini/antigravity/scratch/linggit-first-birthday/src/config/event-config.ts)
+The private dashboard at `/kingkong` shows RSVP totals and recent replies. Open **Guest replies** to search responses, record a reply received elsewhere, update counts, or export the filtered list as CSV. Open **Invitation** or **Media** to change the guest site, then select **Publish changes**.
 
-You can customize:
-- `celebrant.nickname` / `celebrant.fullName`
-- `event.displayDate` / `event.displayTime`
-- `venue.name`, `venue.address`, `venue.googleMapsUrl`, `venue.wazeUrl`
-- `rsvp.deadline`, contact numbers, WhatsApp numbers, Messenger links
-- Milestones and favorite things
+Set the event date, venue, directions links, dress code, milestones, program, and RSVP deadline in [event-config.ts](src/config/event-config.ts). The current directions links point to Pasig City. Replace them with the venue pin before sharing the invitation.
 
----
+The RSVP form saves responses to the private dashboard when guests select **Send RSVP**. WhatsApp sharing is optional. Replies received through WhatsApp can be recorded in the dashboard.
 
-## 📸 Adding Real Photos & Audio
+## Photos and music
 
-- **Baby's Photo Cutout:** Drop a transparent PNG of baby Linggit into `public/images/linggit.png`.
-- **Ms. Rachel Cutout:** Drop a cutout photo into `public/images/ms-rachel.png`.
-- **Custom MP3 Audio:** Drop your audio file into `public/audio/you-are-my-sunshine.mp3`.
-
-*(Note: High-fidelity vector illustrations and synthesized audio fallbacks are already included out of the box if no files are added!)*
+- Add Linggit’s photo to `public/images/linggit.png` and rebuild to show it for every guest. The portrait’s photo picker saves changes on the current device.
+- Add a recording to `public/audio/you-are-my-sunshine.mp3` and rebuild to use it when the envelope opens. The built-in music box plays when the recording is absent.
 
 ---
 

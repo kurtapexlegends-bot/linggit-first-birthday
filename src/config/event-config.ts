@@ -108,7 +108,7 @@ export const eventConfig: EventConfig = {
     },
     {
       time: "2:30 PM",
-      title: "Grand Entrance of Birthday Boy/Girl Linggit",
+      title: "Linggit’s grand entrance",
       description: "With special Ms. Rachel sing-along welcome countdown!",
       badge: "Must Watch",
     },

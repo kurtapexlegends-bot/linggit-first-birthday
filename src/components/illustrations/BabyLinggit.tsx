@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
-import { Camera, Sparkles, Heart } from "lucide-react";
+import { Camera, Sparkles, Heart, Crown } from "lucide-react";
+import { audioController } from "@/lib/audio";
 
 interface BabyLinggitProps {
   className?: string;
@@ -10,7 +11,7 @@ interface BabyLinggitProps {
 }
 
 export const BabyLinggit: React.FC<BabyLinggitProps> = ({
-  className = "w-64 h-80",
+  className = "w-60 h-72 sm:w-72 sm:h-84",
   imageSrc = "/images/linggit.png",
 }) => {
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
@@ -23,7 +24,6 @@ export const BabyLinggit: React.FC<BabyLinggitProps> = ({
     if (saved) {
       setPhotoUrl(saved);
     } else if (imageSrc) {
-      // Check if imageSrc exists
       const testImg = new window.Image();
       testImg.src = imageSrc;
       testImg.onload = () => setPhotoUrl(imageSrc);
@@ -34,6 +34,7 @@ export const BabyLinggit: React.FC<BabyLinggitProps> = ({
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      audioController.playSparkle();
       const reader = new FileReader();
       reader.onload = (event) => {
         const base64 = event.target?.result as string;
@@ -41,7 +42,7 @@ export const BabyLinggit: React.FC<BabyLinggitProps> = ({
         try {
           localStorage.setItem("linggit_custom_photo", base64);
         } catch {
-          // localStorage quote exceeded, fallback in-memory
+          // fallback in-memory
         }
       };
       reader.readAsDataURL(file);
@@ -59,14 +60,23 @@ export const BabyLinggit: React.FC<BabyLinggitProps> = ({
         className="hidden"
       />
 
-      {/* Luxury Arch Cameo Frame with Embossed Gold Trim */}
+      {/* Sunny Sunshine Cameo Frame */}
       <div
-        className="relative w-full h-full p-2.5 rounded-t-[100px] rounded-b-3xl bg-gradient-to-b from-[#FAF4EB] to-[#F5ECE0] border-2 border-[#E5C98D] shadow-2xl transition-all duration-300"
+        className="relative w-full h-full p-3 rounded-t-[110px] rounded-b-3xl bg-gradient-to-b from-[#FEF08A] via-[#FDE047] to-[#FBBF24] border-4 border-white shadow-2xl transition-all duration-300 sunshine-glow"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
-        {/* Inner Gold Inset Pinstripe */}
-        <div className="relative w-full h-full rounded-t-[92px] rounded-b-2xl overflow-hidden border border-[#D4AF37]/50 bg-white flex flex-col items-center justify-center">
+        {/* Playful Floating Little Birthday Crown on Top */}
+        <div className="absolute -top-5 left-1/2 -translate-x-1/2 px-3.5 py-1 rounded-full bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-400 border-2 border-white shadow-md flex items-center gap-1.5 z-20">
+          <Crown className="w-3.5 h-3.5 text-amber-900 fill-amber-900" />
+          <span className="font-bubble text-xs font-bold text-amber-950 uppercase tracking-wider">
+            Birthday Star
+          </span>
+          <Sparkles className="w-3.5 h-3.5 text-amber-900" />
+        </div>
+
+        {/* Inner White Frame with Subtle Cloud Trim */}
+        <div className="relative w-full h-full rounded-t-[100px] rounded-b-2xl overflow-hidden border-2 border-amber-200 bg-gradient-to-b from-sky-50 to-white flex flex-col items-center justify-center">
           {photoUrl ? (
             <div className="relative w-full h-full">
               <Image
@@ -76,58 +86,60 @@ export const BabyLinggit: React.FC<BabyLinggitProps> = ({
                 className="object-cover object-top"
                 priority
               />
-              {/* Soft warm vignette filter */}
-              <div className="absolute inset-0 bg-gradient-to-t from-stone-900/40 via-transparent to-transparent pointer-events-none" />
+              {/* Soft warm sunbeam filter */}
+              <div className="absolute inset-0 bg-gradient-to-t from-amber-900/30 via-transparent to-amber-200/10 pointer-events-none" />
             </div>
           ) : (
-            // Elegant Placeholder: Classical Monogram & Arch Portrait
+            // Cheerful Storybook Character Placeholder
             <div className="flex flex-col items-center justify-center px-4 py-8 text-center space-y-3">
-              <div className="w-20 h-20 rounded-full bg-[#FAF5EE] border-2 border-[#E5C98D] flex items-center justify-center shadow-inner">
-                <span className="font-serif-luxury text-3xl font-bold text-[#A87B2E] tracking-tight">
+              {/* Cute Smiling Baby Monogram */}
+              <div className="w-22 h-22 rounded-full bg-gradient-to-tr from-amber-300 via-yellow-200 to-amber-100 border-3 border-white shadow-md flex flex-col items-center justify-center">
+                <span className="font-bubble text-4xl font-extrabold text-amber-900">
                   L
                 </span>
+                <span className="text-[10px] font-bold text-amber-800 -mt-1">
+                  Baby Linggit
+                </span>
               </div>
+
               <div>
-                <p className="font-serif-luxury text-base font-semibold text-stone-800">
-                  Linggit
+                <p className="font-bubble text-lg font-bold text-stone-800">
+                  Linggit is Turning 1!
                 </p>
-                <p className="text-[11px] font-medium tracking-wide uppercase text-stone-500 mt-0.5">
-                  Turning One
+                <p className="text-xs font-semibold text-amber-700 mt-0.5">
+                  Our Little Sunshine ☀️
                 </p>
               </div>
 
               {/* Upload Prompt Button */}
               <button
                 type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#FAF5EE] hover:bg-[#F2E7D7] border border-[#E5C98D] text-[11px] font-semibold text-stone-700 shadow-sm transition-colors"
+                onClick={() => {
+                  audioController.playPop();
+                  fileInputRef.current?.click();
+                }}
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white hover:bg-amber-50 border-2 border-amber-300 text-xs font-bold text-amber-900 shadow-sm transition-all hover:scale-105 active:scale-95"
               >
-                <Camera className="w-3 h-3 text-[#A87B2E]" />
-                <span>Tap to Add Photo</span>
+                <Camera className="w-3.5 h-3.5 text-amber-600" />
+                <span>Tap to Add Linggit&apos;s Photo</span>
               </button>
             </div>
           )}
 
-          {/* Floating Subtle Change Photo Hover Action */}
-          {photoUrl && isHovered && (
+          {/* Floating Change Photo Action when Hovered */}
+          {photoUrl && (
             <button
               type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="absolute bottom-3 px-3 py-1 bg-stone-900/80 backdrop-blur-sm rounded-full text-[11px] font-medium text-white flex items-center gap-1.5 shadow-md transition-all hover:bg-stone-900"
+              onClick={() => {
+                audioController.playPop();
+                fileInputRef.current?.click();
+              }}
+              className="absolute bottom-3 px-3.5 py-1.5 bg-stone-900/80 hover:bg-stone-900 backdrop-blur-md rounded-full text-xs font-bold text-white flex items-center gap-1.5 shadow-md transition-all hover:scale-105 active:scale-95"
             >
-              <Camera className="w-3 h-3 text-amber-300" />
+              <Camera className="w-3 h-3 text-yellow-300" />
               <span>Change Photo</span>
             </button>
           )}
-        </div>
-
-        {/* Delicate Gold Crest Badge on Top */}
-        <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-gradient-to-r from-[#DFBA73] via-[#FAE8B4] to-[#C89E4B] border border-white shadow-md flex items-center gap-1">
-          <Sparkles className="w-2.5 h-2.5 text-stone-900" />
-          <span className="font-serif-luxury text-[10px] font-bold uppercase tracking-widest text-stone-900">
-            One Year of Love
-          </span>
-          <Heart className="w-2.5 h-2.5 text-stone-900 fill-stone-900" />
         </div>
       </div>
     </div>

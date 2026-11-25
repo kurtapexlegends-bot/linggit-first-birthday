@@ -12,13 +12,18 @@ class AudioController {
       const AudioCtx =
         window.AudioContext ||
         (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-      this.ctx = new AudioCtx();
+      if (!AudioCtx) return;
+      try {
+        this.ctx = new AudioCtx();
+      } catch {
+        return;
+      }
       this.masterGain = this.ctx.createGain();
-      this.masterGain.gain.setValueAtTime(0.35, this.ctx.currentTime);
+      this.masterGain.gain.setValueAtTime(this.isMuted ? 0 : 0.35, this.ctx.currentTime);
       this.masterGain.connect(this.ctx.destination);
     }
     if (this.ctx && this.ctx.state === "suspended") {
-      this.ctx.resume();
+      void this.ctx.resume().catch(() => {});
     }
   }
 
@@ -152,27 +157,22 @@ class AudioController {
   }
 
   // Background Lullaby: "You Are My Sunshine"
-  public startLullaby() {
+  public startLullaby(recording: boolean | string = true) {
     if (this.isPlaying) return;
     this.isPlaying = true;
+    this.initContext();
 
-    if (typeof window !== "undefined") {
-      const audio = new Audio("/audio/you-are-my-sunshine.mp3");
+    if (recording && typeof window !== "undefined") {
+      const audio = new Audio(typeof recording === "string" ? recording : "/audio/you-are-my-sunshine.mp3");
       audio.loop = true;
       audio.volume = 0.35;
-      const playPromise = audio.play();
-
-      if (playPromise !== undefined) {
-        playPromise
-          .then(() => {
-            this.htmlAudio = audio;
-            if (this.isMuted) audio.muted = true;
-          })
-          .catch(() => {
-            this.runSynthLullaby();
-          });
-        return;
-      }
+      audio.muted = this.isMuted;
+      this.htmlAudio = audio;
+      void audio.play()?.catch(() => {
+        this.htmlAudio = null;
+        this.runSynthLullaby();
+      });
+      return;
     }
 
     this.runSynthLullaby();
@@ -281,14 +281,20 @@ class AudioController {
     osc2.stop(startTime + decayTime);
   }
 
-  public toggleMute(): boolean {
-    this.isMuted = !this.isMuted;
+  public setMuted(muted: boolean) {
+    this.isMuted = muted;
     if (this.masterGain && this.ctx) {
-      this.masterGain.gain.setValueAtTime(this.isMuted ? 0 : 0.35, this.ctx.currentTime);
+      const gain = this.masterGain.gain;
+      gain.cancelScheduledValues(this.ctx.currentTime);
+      gain.setTargetAtTime(muted ? 0 : 0.35, this.ctx.currentTime, 0.018);
     }
     if (this.htmlAudio) {
       this.htmlAudio.muted = this.isMuted;
     }
+  }
+
+  public toggleMute(): boolean {
+    this.setMuted(!this.isMuted);
     return this.isMuted;
   }
 
